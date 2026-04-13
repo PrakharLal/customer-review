@@ -1,32 +1,20 @@
 from src.scraper import scrape_reviews
 from src.preprocess import clean_text, chunk_text
 from src.llm import analyze_review
+from src.utils import extract_product_id, build_review_url, fetch_reviews_api
 import pandas as pd
 import time
 import json
-import re
-
-
-def extract_product_id(url):
-    match = re.search(r'/(\d+)\.p', url)
-    if match:
-        return match.group(1)
-    return None
-
-
-def build_review_url(product_id):
-    return f"https://bestbuy.ugc.bazaarvoice.com/3545syn/{product_id}/syndicatedreviews.htm?sourcename=lg"
 
 
 def main():
-    # 🔥 Take user input INSIDE main (clean design)
     user_input = input("🔗 Enter BestBuy Product URL OR Review URL: ").strip()
 
-    # Case 1: Direct review URL
+    # Step 1: Detect source
     if "bazaarvoice" in user_input:
-        review_url = user_input
+        print("🧠 Detected: Bazaarvoice URL")
+        reviews = scrape_reviews(user_input)
 
-    # Case 2: Product URL
     else:
         product_id = extract_product_id(user_input)
 
@@ -34,18 +22,28 @@ def main():
             print("❌ Invalid product URL")
             return
 
+        print(f"🧠 Extracted Product ID: {product_id}")
+
+        # Step 2: Try Bazaarvoice first
         review_url = build_review_url(product_id)
+        print(f"👉 Trying Bazaarvoice: {review_url}")
 
-    print(f"\n👉 Using Review URL: {review_url}")
+        reviews = scrape_reviews(review_url)
 
-    # 🔥 Use correct variable here
-    reviews = scrape_reviews(review_url)
+        # Step 3: Fallback to API
+        if not reviews:
+            print("⚠️ Bazaarvoice failed. Trying BestBuy API...")
+            reviews = fetch_reviews_api(product_id)
 
+    # Step 4: Final fallback
     if not reviews:
-        print("❌ No reviews found. Exiting...")
+        print("\n❌ No reviews found from any source.")
+        print("👉 This product may use a protected or unsupported system.")
         return
 
-    # Save raw data
+    print(f"\n✅ Total Reviews Collected: {len(reviews)}")
+
+    # Save raw
     with open("data/raw_reviews.json", "w") as f:
         json.dump(reviews, f, indent=4)
 
@@ -67,21 +65,21 @@ def main():
                 result = "API FAILED"
 
             analysis_parts.append(result)
-            time.sleep(1)  # rate limit safety
+            time.sleep(1)
 
         final_analysis = " ".join(analysis_parts)
 
         final_data.append({
-            "author": r["author"],
-            "rating": r["rating"],
-            "review": r["text"],
+            "author": r.get("author", "N/A"),
+            "rating": r.get("rating", "N/A"),
+            "review": r.get("text", ""),
             "analysis": final_analysis
         })
 
     df = pd.DataFrame(final_data)
     df.to_csv("data/output.csv", index=False)
 
-    print("\n✅ Data saved to data/output.csv")
+    print("\n🎉 DONE! Data saved to data/output.csv")
 
 
 if __name__ == "__main__":
