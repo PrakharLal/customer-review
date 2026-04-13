@@ -6,12 +6,18 @@ HEADERS = {
 }
 
 def scrape_reviews(url):
-    print("🌐 Fetching page...")
-
-    response = requests.get(url, headers=HEADERS, timeout=10)
-
-    if response.status_code != 200:
-        raise Exception(f"Failed: {response.status_code}")
+    try:
+        response = requests.get(url, headers=HEADERS, timeout=10)
+        response.raise_for_status()
+    except requests.exceptions.Timeout:
+        print("⏱️ Request timed out")
+        return []
+    except requests.exceptions.ConnectionError:
+        print("🌐 Connection error")
+        return []
+    except requests.exceptions.RequestException as e:
+        print("⚠️ Request failed:", e)
+        return []
 
     soup = BeautifulSoup(response.text, "html.parser")
 
