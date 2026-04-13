@@ -23,7 +23,6 @@ def scrape_reviews(url):
 
     reviews = []
 
-    # ✅ Correct container
     review_blocks = soup.select(".BVRRContentReview")
 
     print(f"🔍 Found {len(review_blocks)} reviews")

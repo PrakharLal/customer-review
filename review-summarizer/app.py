@@ -1,15 +1,12 @@
 import streamlit as st
 import pandas as pd
 from src.preprocess import chunk_text_by_tokens
-
 from src.scraper import scrape_reviews
 from src.llm import analyze_overall_reviews
 from src.utils import extract_product_id, build_review_url, fetch_reviews_api
 
-# 🎨 PAGE CONFIG
 st.set_page_config(page_title="AI Review Analyzer", layout="centered")
 
-# 🔥 CUSTOM CSS (MODERN UI)
 st.markdown("""
 <style>
 .stApp {
@@ -17,7 +14,6 @@ st.markdown("""
     color: white;
 }
 
-/* Glass Card Improved */
 .glass {
     background: rgba(255, 255, 255, 0.08);
     padding: 30px;
@@ -28,19 +24,16 @@ st.markdown("""
     line-height: 1.7;
 }
 
-/* Improve text readability */
 .glass p, .glass li {
     font-size: 16px;
     color: #e6e6e6;
 }
 
-/* Section headings */
 .glass h3 {
     color: #ffffff;
     margin-bottom: 15px;
 }
 
-/* Button */
 .stButton>button {
     background: linear-gradient(90deg, #ff7e5f, #feb47b);
     border-radius: 12px;
@@ -48,23 +41,17 @@ st.markdown("""
     padding: 10px 20px;
 }
 
-/* Success box */
 .stAlert {
     border-radius: 10px;
 }
 </style>
-    
 """, unsafe_allow_html=True)
 
-
-# 🧠 HEADER
 st.markdown("<h1>🧠 AI Product Review Analyzer</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align:center;'>Get intelligent insights from product reviews</p>", unsafe_allow_html=True)
 
-# 🔗 INPUT
 user_input = st.text_input("🔗 Enter BestBuy Product URL OR Review URL")
 
-# 🚀 BUTTON
 if st.button("🚀 Analyze Product"):
 
     if not user_input:
@@ -95,38 +82,19 @@ if st.button("🚀 Analyze Product"):
 
     st.success(f"✅ {len(reviews)} reviews collected")
 
-    # 🔥 LIMIT REVIEWS
     reviews = reviews[:20]
 
-
     all_reviews_text = " ".join([r["text"] for r in reviews])
-    chunks = chunk_text_by_tokens(all_reviews_text, max_tokens=500)
     all_reviews_text = all_reviews_text[:4000]
 
-    # 🧠 LLM
     with st.spinner("🧠 Generating insights..."):
-        
-        chunks = chunk_text_by_tokens(all_reviews_text, max_tokens=500)
+        overall_analysis = analyze_overall_reviews(all_reviews_text)
 
-        analysis_parts = []
-
-        for chunk in chunks:
-            result = analyze_overall_reviews(chunk)
-            analysis_parts.append(result)
-
-        overall_analysis = " ".join(analysis_parts)
-
-    # 💎 GLASS CARD OUTPUT
     st.markdown('<div class="glass">', unsafe_allow_html=True)
-
     st.markdown("### 🧠 Overall Product Insights")
-
-# 👇 THIS FIXES MARKDOWN FORMATTING
     st.markdown(overall_analysis)
-
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # 📥 CSV DOWNLOAD
     df = pd.DataFrame(reviews)
     df["overall_analysis"] = overall_analysis
 

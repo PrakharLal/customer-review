@@ -8,35 +8,35 @@ HEADERS = {
 }
 
 
-# 🔁 COMMON API CALL FUNCTION (REUSABLE)
+
 def call_llm(payload, max_retries=3):
     for attempt in range(max_retries):
         try:
             response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=15)
 
-            # ✅ SUCCESS
+            
             if response.status_code == 200:
                 data = response.json()
                 return data["choices"][0]["message"]["content"]
 
-            # ⚠️ RATE LIMIT
+            
             elif response.status_code == 429:
-                print(f"⚠️ Rate limited... retry {attempt+1}")
+                print(f"Rate limited... retry {attempt+1}")
                 time.sleep(2 * (attempt + 1))  # exponential wait
 
-            # ❌ OTHER API ERRORS
+            
             else:
-                print("❌ API Error:", response.text)
-                return "⚠️ LLM analysis failed"
+                print("API Error:", response.text)
+                return "LLM analysis failed"
 
         except requests.exceptions.Timeout:
-            print("⏱️ Request timed out")
+            print("Request timed out")
         
         except requests.exceptions.ConnectionError:
-            print("🌐 Connection error")
+            print("Connection error")
 
         except requests.exceptions.RequestException as e:
-            print("⚠️ Request failed:", e)
+            print("Request failed:", e)
 
         # wait before retry
         time.sleep(1)
@@ -44,7 +44,7 @@ def call_llm(payload, max_retries=3):
     return "⚠️ LLM failed after multiple retries"
 
 
-# 🔍 PER-REVIEW ANALYSIS
+
 def analyze_review(text):
     prompt = f"""
     Analyze the following product review:
@@ -67,7 +67,7 @@ def analyze_review(text):
     return call_llm(payload)
 
 
-# 🧠 OVERALL PRODUCT ANALYSIS
+
 def analyze_overall_reviews(all_reviews_text):
     prompt = f"""
     You are an expert product analyst.
