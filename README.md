@@ -37,7 +37,7 @@ The application takes a product URL, extracts reviews, processes the text, and g
 	•	Streamlit
 	•	Mistral AI API
 	•	tiktoken
-	•	python-dotenv
+	•	python-dotenv 
 
 ------------------------------------------------------------------------------------------------------------------------
 
